@@ -1,0 +1,173 @@
+/* ===================================================================== */
+/* PADRÃO DAS APRESENTAÇÕES ANTERIORES (Atividades 4 e 5)                 */
+/* ===================================================================== */
+
+.box-grey {
+  background-color: #F3F4F6;
+  border-left: 6px solid black;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.scrollable {
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 15px;
+}
+
+.reveal h2 {
+  font-size: 1.3em;
+}
+
+.panel-tabset a {
+  color: black !important;
+}
+
+.panel-tabset a.active {
+  color: black !important;
+  font-weight: bold;
+}
+
+/* ===================================================================== */
+/* TABELAS NO ESTILO DA ATIVIDADE 4 (tabela-artigo)                       */
+/* ===================================================================== */
+
+.titulo-tabela {
+  font-size: 50%;
+  font-weight: bold;
+  text-align: left;
+  line-height: 1.3;
+  margin-bottom: 10px;
+}
+
+.caixa-scroll {
+  max-height: 440px;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.caixa-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.caixa-scroll::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 4px;
+}
+
+.tabela-artigo {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 52%;
+}
+
+.tabela-artigo th,
+.tabela-artigo td {
+  border: none !important;
+  padding: 5px 8px;
+  text-align: center;
+  background-color: transparent;
+  vertical-align: middle;
+}
+
+.tabela-artigo th:first-child,
+.tabela-artigo td:first-child {
+  text-align: left;
+}
+
+.tabela-artigo thead tr {
+  border-top: 1.5px solid black !important;
+  border-bottom: 1.5px solid black !important;
+}
+
+.tabela-artigo tbody {
+  border-bottom: 1.5px solid black !important;
+}
+
+.tabela-artigo tr.linha-categoria {
+  border-bottom: 1px solid #d3d3d3 !important;
+}
+
+.tabela-artigo td.recuo {
+  padding-left: 22px;
+}
+
+.tabela-artigo .n-cab {
+  font-weight: normal;
+  font-size: 90%;
+  color: #52514e;
+}
+
+.tabela-artigo .md {
+  font-size: 85%;
+  color: #52514e;
+}
+
+/* Caselas influentes (resíduo padronizado ajustado) */
+.tabela-artigo td.res-pos {
+  background-color: #dbe8f8 !important;
+  font-weight: bold;
+}
+
+.tabela-artigo td.res-neg {
+  background-color: #f9dede !important;
+  font-weight: bold;
+}
+
+.rodape-tabela {
+  font-size: 48%;
+  text-align: justify;
+  margin-top: 8px;
+  line-height: 1.3;
+  color: #374151;
+}
+
+/* ===================================================================== */
+/* AJUSTES GERAIS                                                         */
+/* ===================================================================== */
+
+.nota {
+  font-size: 65%;
+  line-height: 1.3;
+  color: #374151;
+  margin-top: 6px;
+}
+
+.destaque {
+  background-color: #FFFFFF;
+  border: 1.5px solid #9CA3AF;
+  border-radius: 10px;
+  padding: 10px 16px;
+  margin: 8px 0;
+}
+
+.reveal .slide figure,
+.reveal .slide .cell-output-display img {
+  margin: 0 auto;
+}
+
+/* Slides com mais texto: fonte reduzida para caber sem rolagem */
+.reveal .compacto {
+  font-size: 0.8em;
+}
+
+/* Abas um pouco mais justas, para não quebrarem em duas linhas */
+.reveal .panel-tabset-tabby > li > a {
+  padding: 0.25em 0.55em !important;
+}
+
+/* Primeira coluna das tabelas sem quebra de linha */
+.tabela-artigo td:first-child,
+.tabela-artigo th:first-child {
+  white-space: nowrap;
+}
+
+/* Células das tabelas sem quebra (mantém a seta junto do valor) */
+.tabela-artigo td {
+  white-space: nowrap;
+}
+
+/* Abas menores nos slides de resultados, para ficarem em uma linha */
+.reveal .box-grey:not(.compacto) .panel-tabset-tabby {
+  font-size: 0.8em;
+}
