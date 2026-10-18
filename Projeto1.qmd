@@ -30,8 +30,6 @@ library(readxl)
 library(dplyr)
 library(tidyr)
 library(ggplot2)
-library(rstatix)
-library(car)
 
 # ---------------------------------------------------------------------------
 # Leitura dos dados
@@ -241,9 +239,38 @@ tabela_quali <- function(vars, titulo) {
 }
 
 # ---------------------------------------------------------------------------
-# Variáveis quantitativas: ANOVA de Welch, Levene, Kruskal-Wallis e
+# Variáveis quantitativas: ANOVA de Welch, Levene e
 # comparações múltiplas de Games-Howell
 # ---------------------------------------------------------------------------
+# Teste de Levene (centrado na mediana, igual ao car::leveneTest)
+levene_mediana <- function(f, data) {
+  mf <- model.frame(f, data)
+  y <- mf[[1]]; g <- factor(mf[[2]])
+  z <- abs(y - ave(y, g, FUN = median))
+  anova(lm(z ~ g))
+}
+
+# Teste de Games-Howell (mesmo resultado do rstatix::games_howell_test)
+games_howell <- function(f, data) {
+  mf <- model.frame(f, data)
+  y <- mf[[1]]; g <- droplevels(factor(mf[[2]]))
+  niv <- levels(g); k <- length(niv)
+  m <- tapply(y, g, mean); v <- tapply(y, g, var); n <- tapply(y, g, length)
+  pares <- combn(niv, 2)
+  res <- lapply(seq_len(ncol(pares)), function(i) {
+    a <- pares[1, i]; b <- pares[2, i]
+    dif  <- m[[b]] - m[[a]]
+    se2  <- v[[a]] / n[[a]] + v[[b]] / n[[b]]
+    gl   <- se2^2 / ((v[[a]] / n[[a]])^2 / (n[[a]] - 1) + (v[[b]] / n[[b]])^2 / (n[[b]] - 1))
+    q    <- abs(dif) / sqrt(se2 / 2)
+    marg <- qtukey(0.95, k, gl) * sqrt(se2 / 2)
+    data.frame(group1 = a, group2 = b, estimate = dif,
+               conf.low = dif - marg, conf.high = dif + marg,
+               p.adj = ptukey(q, k, gl, lower.tail = FALSE))
+  })
+  do.call(rbind, res)
+}
+
 analisa_quanti <- function(v) {
   f <- reformulate("Leites_Derivados", response = v)
   list(
@@ -254,9 +281,8 @@ analisa_quanti <- function(v) {
                 q1 = quantile(.data[[v]], 0.25), q3 = quantile(.data[[v]], 0.75),
                 .groups = "drop"),
     welch   = oneway.test(f, data = dados, var.equal = FALSE),
-    levene  = leveneTest(f, data = dados),
-    kruskal = kruskal.test(f, data = dados),
-    gh      = games_howell_test(dados, f)
+    levene  = levene_mediana(f, dados),
+    gh      = games_howell(f, dados)
   )
 }
 
@@ -447,7 +473,6 @@ As exclusões valem apenas para o teste da própria variável. Nas demais análi
 - **Suposições:** independência e normalidade (com grupos grandes, garantida aproximadamente pelo TCL). **Não exige variâncias iguais**;
 - Escolhida porque os grupos são **muito desbalanceados** (de 72 a 1.026 pessoas);
 - Comparações múltiplas pelo teste de **Games-Howell**;
-- **Kruskal-Wallis** usado como análise de sensibilidade.
 
 ### Software
 
@@ -455,7 +480,7 @@ As exclusões valem apenas para o teste da própria variável. Nas demais análi
 - Análises feitas no **R**, com os pacotes:
   - `readxl`: leitura da base;
   - `dplyr` e `tidyr`: manipulação dos dados;
-  - `rstatix` e `car`: Games-Howell e teste de Levene;
+  - Games-Howell e teste de Levene: implementados em R base;
   - `ggplot2`: gráficos.
 ::::
 :::::
@@ -651,8 +676,7 @@ cab_q <- paste0(
   paste0("<th>", names(n_resp), "<br><span class='n-cab'>N = ",
          fmt_num(as.numeric(n_resp), 0), "</span></th>", collapse = ""),
   "<th><i>p</i>-valor<br><span class='n-cab'>Welch</span></th>",
-  "<th><i>p</i>-valor<br><span class='n-cab'>Levene</span></th>",
-  "<th><i>p</i>-valor<br><span class='n-cab'>Kruskal-Wallis</span></th></tr></thead>"
+  "<th><i>p</i>-valor<br><span class='n-cab'>Levene</span></th></tr></thead>"
 )
 
 linhas_q <- vapply(names(vars_quanti), function(v) {
@@ -667,8 +691,7 @@ linhas_q <- vapply(names(vars_quanti), function(v) {
   negrito <- function(p) if (p < 0.05) paste0("<strong>", fmt_p(p), "</strong>") else fmt_p(p)
   paste0("<tr class='linha-categoria'><td><strong>", rotulos[v], "</strong></td>", cel,
          "<td>", negrito(r$welch$p.value), "</td>",
-         "<td>", fmt_p(r$levene$`Pr(>F)`[1]), "</td>",
-         "<td>", negrito(r$kruskal$p.value), "</td></tr>")
+         "<td>", fmt_p(r$levene$`Pr(>F)`[1]), "</td></tr>")
 }, character(1))
 
 html_bloco(paste0(
@@ -676,9 +699,8 @@ html_bloco(paste0(
   "<div class='caixa-scroll'><table class='tabela-artigo' style='font-size:56%;'>",
   cab_q, "<tbody>", paste0(linhas_q, collapse = ""), "</tbody></table>",
   "<div class='rodape-tabela'>Média (desvio-padrão); abaixo, mediana [1º quartil; 3º quartil]. ",
-  "<i>p</i>-valor da ANOVA de Welch (teste principal), do teste de Levene para homogeneidade ",
-  "de variâncias e do teste de Kruskal-Wallis (análise de sensibilidade). Em negrito quando ",
-  "<i>p</i> &lt; 0,05.</div></div>"
+  "<i>p</i>-valor da ANOVA de Welch (teste principal) e do teste de Levene para homogeneidade ",
+  "de variâncias. Em negrito quando <i>p</i> &lt; 0,05.</div></div>"
 ))
 ```
 
@@ -699,7 +721,7 @@ linhas_gh <- if (nrow(gh_sig) == 0) {
 } else {
   vapply(seq_len(nrow(gh_sig)), function(i) {
     g <- gh_sig[i, ]
-    # rstatix devolve média(group2) - média(group1); invertemos para group1 - group2
+    # games_howell devolve média(group2) - média(group1); invertemos para group1 - group2
     dif <- -g$estimate; li <- -g$conf.high; ls <- -g$conf.low
     paste0("<tr class='linha-categoria'><td><strong>", g$variavel, "</strong></td>",
            "<td>", g$group1, " vs ", g$group2, "</td>",
@@ -757,7 +779,7 @@ html_bloco(paste0(
 - **Idade:** quem **mudou** o consumo (aumentou ou diminuiu) é **mais jovem** do que quem não alterou;
 - **Peso e IMC:** quem **aumentou** o consumo tem peso e IMC **maiores** do que quem não alterou (cerca de 2,5 kg e 0,8 kg/m² a mais);
 - **Altura:** sem diferença entre os grupos;
-- Kruskal-Wallis confirmou as mesmas conclusões. As diferenças são **pequenas** em termos práticos.
+- As diferenças são **pequenas** em termos práticos.
 ::::
 :::::
 
